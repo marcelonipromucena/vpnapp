@@ -1,12 +1,13 @@
 import React, { Component } from "react";
-import { StyleSheet, Image, ScrollView } from "react-native";
+import { Animated, StyleSheet, Image, ScrollView } from "react-native";
 import { Block, Button, Text, Utils } from "expo-ui-kit";
 
 //constants
-import { background } from "../constants/images";
+import { images, theme } from "../constants";
+const { background } = images;
 
 //theme
-const { theme, rgba } = Utils;
+const { rgba } = Utils;
 const { SIZES, COLORS } = theme;
 
 const backgrounds = [
@@ -31,6 +32,8 @@ const backgrounds = [
 ];
 
 export default class Welcome extends Component {
+  scrollX = new Animated.Value(0);
+
   renderImages() {
     return (
       <ScrollView
@@ -41,6 +44,11 @@ export default class Welcome extends Component {
         scrollEventThrottle={16}
         snapToAlignment="center"
         showsHorizontalScrollIndicator={false}
+        onScroll={Animated.event([
+          {
+            nativeEvent: { contentOffset: { x: this.scrollX } }
+          }
+        ])}
       >
         {backgrounds.map((item, index) => (
           <Block
@@ -64,32 +72,33 @@ export default class Welcome extends Component {
   }
 
   renderDots() {
+    const dotPosition = Animated.divide(this.scrollX, SIZES.width);
     return (
-      <Block flex={false} row center middle margin={[20, 0, 40, 0]}>
-        <Block
-          color={COLORS.gray}
-          flex={false}
-          gray
-          margin={[0, 6]}
-          radius={8}
-          style={{ width: 8, height: 8 }}
-        />
-        <Block
-          color={rgba(COLORS.gray, 0.5)}
-          flex={false}
-          gray
-          margin={[0, 6]}
-          radius={8}
-          style={{ width: 8, height: 8 }}
-        />
-        <Block
-          color={rgba(COLORS.gray, 0.5)}
-          flex={false}
-          gray
-          margin={[0, 6]}
-          radius={8}
-          style={{ width: 8, height: 8 }}
-        />
+      <Block
+        flex={false}
+        row
+        center
+        middle
+        margin={[SIZES.small, 0, SIZES.padding * 2, 0]}
+      >
+        {backgrounds.map((item, index) => {
+          const opacity = dotPosition.interpolate({
+            inputRange: [index - 1, index, index + 1],
+            outputRange: [0.3, 1, 0.3],
+            extrapolate: "clamp"
+          });
+          return (
+            <Block
+              key={index}
+              gray
+              animated
+              flex={false}
+              radius={SIZES.small}
+              margin={[0, SIZES.small / 2]}
+              style={[styles.dot, { opacity }]}
+            />
+          );
+        })}
       </Block>
     );
   }
@@ -103,17 +112,29 @@ export default class Welcome extends Component {
           {this.renderImages()}
         </Block>
         <Block flex={false} center bottom margin={60}>
-          <Text h3 semibold>
+          <Text h3 semibold theme={theme}>
             Secured, forever.
           </Text>
-          <Text center caption gray margin={[10, 0]}>Curabitur lobortis id lorem id bibendum. Ut id consectetur magna.Quisque volutpat augue enim, pulvinar lobortis.</Text>
+          <Text theme={theme} center caption gray margin={[SIZES.small, 0]}>
+            Curabitur lobortis id lorem id bibendum. Ut id consectetur
+            magna.Quisque volutpat augue enim, pulvinar lobortis.
+          </Text>
+
           {this.renderDots()}
+
           <Button
             primary
-            style={{ borderRadius: 30 }}
+            theme={theme}
+            // style={{ borderRadius: 30 }}
             onPress={() => navigation.navigate("VPN")}
           >
-            <Text center white caption bold margin={[6, 26]}>
+            <Text
+              center
+              white
+              caption
+              bold
+              margin={[SIZES.padding / 2, SIZES.padding * 2]}
+            >
               GET STARTED
             </Text>
           </Button>
@@ -123,4 +144,9 @@ export default class Welcome extends Component {
   }
 }
 
-const styles = StyleSheet.create({});
+const styles = StyleSheet.create({
+  dot: {
+    width: SIZES.base,
+    height: SIZES.base
+  }
+});
